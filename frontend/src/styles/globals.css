@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Dancing+Script:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+:root {
+  --cream:      #F5F0E8;
+  --parchment:  #F2E8D5;
+  --ink:        #2C1810;
+  --gold:       #C9962C;
+  --gold-light: #E8B84B;
+  --forest:     #2D4A2D;
+  --sepia:      #8B6914;
+  --sage:       #8A9E7B;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Lora', Georgia, serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--parchment); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--sepia); }
+
+/* ── Selection ──────────────────────────────────────────────────────── */
+::selection { background: rgba(201,150,44,0.25); color: var(--ink); }
+
+/* ── Paper texture overlay ──────────────────────────────────────────── */
+.paper-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+/* ── Polaroid Card ──────────────────────────────────────────────────── */
+.polaroid {
+  background: #fff;
+  padding: 12px 12px 40px;
+  box-shadow: 0 4px 6px rgba(44,24,16,0.12), 0 12px 40px rgba(44,24,16,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-origin: center bottom;
+}
+.polaroid:hover {
+  transform: scale(1.03) rotate(0deg) !important;
+  box-shadow: 0 12px 40px rgba(44,24,16,0.2), 0 4px 12px rgba(44,24,16,0.15);
+  z-index: 10;
+}
+
+/* ── Gold Divider ───────────────────────────────────────────────────── */
+.gold-divider {
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  height: 1px;
+  border: none;
+}
+
+/* ── Vintage Button ─────────────────────────────────────────────────── */
+.btn-vintage {
+  @apply relative overflow-hidden font-serif tracking-widest uppercase text-sm border border-current transition-all duration-300;
+  letter-spacing: 0.2em;
+}
+.btn-vintage::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(201,150,44,0.15), transparent);
+  transition: left 0.5s ease;
+}
+.btn-vintage:hover::before { left: 100%; }
+
+/* ── Shimmer Loading ────────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, var(--parchment) 25%, var(--cream) 50%, var(--parchment) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Input Styling ──────────────────────────────────────────────────── */
+.vintage-input {
+  @apply w-full px-4 py-3 bg-cream-50 border border-sepia-200/50 rounded-sm text-ink font-body text-sm
+    focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/20
+    placeholder:text-ink-muted/50 transition-all duration-200;
+  background-color: rgba(245, 240, 232, 0.5);
+}
+.vintage-input:focus { background-color: rgba(255, 255, 255, 0.7); }
+
+/* ── Masonry overrides ──────────────────────────────────────────────── */
+.masonry-grid  { display: flex; margin-left: -20px; width: auto; }
+.masonry-col   { padding-left: 20px; background-clip: padding-box; }
+
+/* ── Confetti canvas fix ─────────────────────────────────────────────── */
+.confetti-canvas {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ── Glow text ───────────────────────────────────────────────────────── */
+.glow-gold {
+  text-shadow: 0 0 20px rgba(201,150,44,0.4), 0 0 40px rgba(201,150,44,0.2);
+}
+
+/* ── Vintage border ─────────────────────────────────────────────────── */
+.vintage-border {
+  border: 1px solid rgba(201,150,44,0.3);
+  box-shadow: 0 0 0 4px rgba(201,150,44,0.06), inset 0 0 0 1px rgba(201,150,44,0.1);
+}
+
+/* ── Section heading ornament ───────────────────────────────────────── */
+.ornament::before,
+.ornament::after {
+  content: '✦';
+  color: var(--gold);
+  margin: 0 0.75rem;
+  font-size: 0.6em;
+  opacity: 0.7;
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
