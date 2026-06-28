@@ -9,7 +9,7 @@ import Navbar from '@/components/layout/Navbar';
 import FloatingParticles from '@/components/animations/FloatingParticles';
 import StatsBar from '@/components/ui/StatsBar';
 
-const GRADUATION_DATE = new Date('2024-05-15'); // Change to actual date
+const GRADUATION_DATE = new Date('2026-06-15'); // Change to actual date
 const QUOTES = [
   "Not the end of a chapter — the beginning of the greatest story.",
   "Four years of dreams, friendship, and late nights — forever ours.",
@@ -89,7 +89,7 @@ export default function HomePage() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}
             className="font-script text-gold text-xl mb-4 tracking-wide"
           >
-            Class of 2024 · Computer Science Engineering
+            Class of 2026 · Computer Science & Engineering
           </motion.p>
 
           <motion.h1

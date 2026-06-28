@@ -2,10 +2,9 @@ const router = require('express').Router();
 const { body, validationResult, query } = require('express-validator');
 const FriendMemory = require('../models/FriendMemory');
 const auth = require('../middleware/auth');
-const { uploadFields } = require('../config/cloudinary');
-const { cloudinary } = require('../config/cloudinary');
+const { uploadFields, uploadToCloudinary, cloudinary } = require('../config/cloudinary');
 
-// POST /api/memories  — submit a new memory
+// POST /api/memories
 router.post('/', uploadFields, [
   body('fullName').trim().notEmpty().withMessage('Name is required').isLength({ max: 100 }),
   body('friendshipRating').optional().isInt({ min: 1, max: 10 }),
@@ -16,13 +15,24 @@ router.post('/', uploadFields, [
   try {
     const data = { ...req.body, ipAddress: req.ip };
 
+    // Upload bestPhoto if provided
     if (req.files?.bestPhoto?.[0]) {
-      data.bestPhotoUrl      = req.files.bestPhoto[0].path;
-      data.bestPhotoPublicId = req.files.bestPhoto[0].filename;
+      const result = await uploadToCloudinary(req.files.bestPhoto[0].buffer, {
+        folder: 'graduation-vault/images',
+        transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+      });
+      data.bestPhotoUrl      = result.url;
+      data.bestPhotoPublicId = result.publicId;
     }
+
+    // Upload currentPhoto if provided
     if (req.files?.currentPhoto?.[0]) {
-      data.currentPhotoUrl      = req.files.currentPhoto[0].path;
-      data.currentPhotoPublicId = req.files.currentPhoto[0].filename;
+      const result = await uploadToCloudinary(req.files.currentPhoto[0].buffer, {
+        folder: 'graduation-vault/images',
+        transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+      });
+      data.currentPhotoUrl      = result.url;
+      data.currentPhotoPublicId = result.publicId;
     }
 
     const memory = new FriendMemory(data);
@@ -34,7 +44,7 @@ router.post('/', uploadFields, [
   }
 });
 
-// GET /api/memories  — fetch approved memories (public)
+// GET /api/memories
 router.get('/', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 50 }),
@@ -65,11 +75,10 @@ router.get('/', [
   }
 });
 
-// GET /api/memories/stats — public stats
+// GET /api/memories/stats
 router.get('/stats', async (req, res) => {
   try {
-    const [total, friends, featured] = await Promise.all([
-      FriendMemory.countDocuments({ status: 'approved' }),
+    const [total, featured] = await Promise.all([
       FriendMemory.countDocuments({ status: 'approved' }),
       FriendMemory.countDocuments({ status: 'approved', featured: true }),
     ]);
@@ -77,27 +86,21 @@ router.get('/stats', async (req, res) => {
       { $match: { status: 'approved', friendshipRating: { $exists: true } } },
       { $group: { _id: null, avg: { $avg: '$friendshipRating' } } },
     ]);
-    res.json({ total, friends, featured, avgRating: avgRating[0]?.avg?.toFixed(1) || 0 });
+    res.json({ total, friends: total, featured, avgRating: avgRating[0]?.avg?.toFixed(1) || 0 });
   } catch {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
 
-// POST /api/memories/:id/like  — toggle like
+// POST /api/memories/:id/like
 router.post('/:id/like', async (req, res) => {
   try {
     const ip     = req.ip;
     const memory = await FriendMemory.findById(req.params.id);
     if (!memory) return res.status(404).json({ error: 'Memory not found' });
-
     const idx = memory.likedBy.indexOf(ip);
-    if (idx > -1) {
-      memory.likedBy.splice(idx, 1);
-      memory.likes = Math.max(0, memory.likes - 1);
-    } else {
-      memory.likedBy.push(ip);
-      memory.likes += 1;
-    }
+    if (idx > -1) { memory.likedBy.splice(idx, 1); memory.likes = Math.max(0, memory.likes - 1); }
+    else          { memory.likedBy.push(ip); memory.likes += 1; }
     await memory.save();
     res.json({ likes: memory.likes, liked: idx === -1 });
   } catch {
@@ -112,7 +115,6 @@ router.post('/:id/comment', [
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
   try {
     const memory = await FriendMemory.findByIdAndUpdate(
       req.params.id,
@@ -126,7 +128,7 @@ router.post('/:id/comment', [
   }
 });
 
-// ADMIN routes
+// ADMIN — get all
 router.get('/admin/all', auth, async (req, res) => {
   try {
     const memories = await FriendMemory.find().sort({ submittedAt: -1 });
@@ -136,6 +138,7 @@ router.get('/admin/all', auth, async (req, res) => {
   }
 });
 
+// ADMIN — update status/featured
 router.patch('/admin/:id/status', auth, async (req, res) => {
   try {
     const { status, featured } = req.body;
@@ -150,12 +153,11 @@ router.patch('/admin/:id/status', auth, async (req, res) => {
   }
 });
 
+// ADMIN — delete
 router.delete('/admin/:id', auth, async (req, res) => {
   try {
     const memory = await FriendMemory.findById(req.params.id);
     if (!memory) return res.status(404).json({ error: 'Not found' });
-
-    // Delete from Cloudinary
     const deletes = [];
     if (memory.bestPhotoPublicId)    deletes.push(cloudinary.uploader.destroy(memory.bestPhotoPublicId));
     if (memory.currentPhotoPublicId) deletes.push(cloudinary.uploader.destroy(memory.currentPhotoPublicId));
